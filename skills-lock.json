@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "skills": {
+    "add-custom-domain": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "7733a1e67086b4f0fba6331ea27acd7124a78fa3393cc30d4ca396bc1efdbd5b"
+    },
+    "add-node-sdk": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "124432593500fc1e79843eefbf9a201c003be48fd94f4a1f256b37f8c6adb128"
+    },
+    "add-react-analytics": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "fd84059ac53be378e1161a043909f539b16de0494f7b8a41f980e69c03a8f70c"
+    },
+    "add-session-recording": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "73669bf0670c8d818acbcef3bf6d4f06375c32bdbf99d07a3586638e4bbff880"
+    },
+    "deploy-to-temps": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "975549057367f26b97fcd2f28b1944842657dcabf3a31e914f32bc333571b934"
+    },
+    "temps-cli": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "c24c7c06eb2caf205bf18d6f4a5f1f833489c5d3b975895c009e5dfc0b81b934"
+    },
+    "temps-mcp-setup": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "5ce30f4a7ca59406a716205a0b4e713439af81584ecab88bcfcdbc0202249d14"
+    },
+    "temps-platform-setup": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "dc0c6e7b5b8785749b446a564d277c0b91bbe446b95c210c6144314d0afb801c"
+    },
+    "temps-plugin": {
+      "source": "gotempsh/temps",
+      "sourceType": "github",
+      "computedHash": "a49b969468d9baf2eee6437d4974d22d32f6ae2586118f7e48dd94c8e7072b4c"
+    }
+  }
+}
