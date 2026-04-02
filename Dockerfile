@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Root Dockerfile for Temps deployment — uses local Go workspace
 # Based on transports/Dockerfile.local for pre-release builds where
 # module versions in transports/ depend on unpublished local changes
@@ -6,34 +7,42 @@
 FROM node:25-alpine3.23 AS ui-builder
 WORKDIR /app
 
-# Copy UI package files and install dependencies
-COPY ui/package*.json ./
-RUN npm ci
+# Copy dependency manifests first (changes less often → cached layer)
+COPY ui/package.json ui/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm \
+  npm ci
 
-# Copy UI source code
+# Copy UI source code (changes more often → separate layer)
 COPY ui/ ./
 
-# Build UI (skip the copy-build step)
+# Build UI
 RUN npx next build
 RUN node scripts/fix-paths.js
 
-# --- Go Build Stage: Compile the Go binary using local modules ---
-FROM golang:1.26.1-alpine3.23 AS builder
+# --- Go Dependency Stage: Download modules separately for caching ---
+FROM golang:1.26.1-alpine3.23 AS deps
 WORKDIR /build
 
-# Install dependencies including gcc for CGO and sqlite
+# Install build toolchain (cached unless base image changes)
 RUN apk add --no-cache gcc musl-dev sqlite-dev binutils binutils-gold
 
-# Set environment for CGO-enabled build (required for go-sqlite3)
 ENV CGO_ENABLED=1 GOOS=linux
 
-# Copy all local modules
-COPY core/ ./core/
-COPY framework/ ./framework/
-COPY plugins/ ./plugins/
-COPY transports/ ./transports/
+# Copy ONLY go.mod/go.sum files from all modules (changes less often)
+COPY core/go.mod core/go.sum ./core/
+COPY framework/go.mod framework/go.sum ./framework/
+COPY plugins/governance/go.mod plugins/governance/go.sum ./plugins/governance/
+COPY plugins/jsonparser/go.mod plugins/jsonparser/go.sum ./plugins/jsonparser/
+COPY plugins/litellmcompat/go.mod plugins/litellmcompat/go.sum ./plugins/litellmcompat/
+COPY plugins/logging/go.mod plugins/logging/go.sum ./plugins/logging/
+COPY plugins/maxim/go.mod plugins/maxim/go.sum ./plugins/maxim/
+COPY plugins/mocker/go.mod plugins/mocker/go.sum ./plugins/mocker/
+COPY plugins/otel/go.mod plugins/otel/go.sum ./plugins/otel/
+COPY plugins/semanticcache/go.mod plugins/semanticcache/go.sum ./plugins/semanticcache/
+COPY plugins/telemetry/go.mod plugins/telemetry/go.sum ./plugins/telemetry/
+COPY transports/go.mod transports/go.sum ./transports/
 
-# Set up go workspace to resolve local module dependencies
+# Set up Go workspace
 RUN go work init && \
   go work use ./core && \
   go work use ./framework && \
@@ -48,15 +57,28 @@ RUN go work init && \
   go work use ./plugins/telemetry && \
   go work use ./transports
 
-# Download external (non-local) dependencies
-RUN cd /build/transports && go mod download
+# Download all external dependencies (cached until go.mod/go.sum change)
+RUN --mount=type=cache,target=/go/pkg/mod \
+  cd /build/transports && go mod download
 
-# Copy UI build output into transports
+# --- Go Build Stage: Compile the binary ---
+FROM deps AS builder
+
+# Now copy all source code (this layer busts only on source changes,
+# not on dependency changes — deps are already cached above)
+COPY core/ ./core/
+COPY framework/ ./framework/
+COPY plugins/ ./plugins/
+COPY transports/ ./transports/
+
+# Copy UI build output
 COPY --from=ui-builder /app/out ./transports/bifrost-http/ui
 
-# Build the binary with CGO enabled and static SQLite linking
+# Build the binary with cached module and build caches
 ARG VERSION=unknown
-RUN cd /build/transports && \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+  cd /build/transports && \
   go build \
     -ldflags="-w -s -X main.Version=v${VERSION} -extldflags '-static'" \
     -a -trimpath \
