@@ -1,9 +1,9 @@
-# Thin wrapper — delegates to the real Dockerfile in transports/
-# Required because Temps expects Dockerfile at the project root
-# See: transports/Dockerfile for the actual multi-stage build
+# Root Dockerfile for Temps deployment — uses local Go workspace
+# Based on transports/Dockerfile.local for pre-release builds where
+# module versions in transports/ depend on unpublished local changes
 
-# syntax=docker/dockerfile:1
-FROM node:25-alpine3.23@sha256:cf38e1f3c28ac9d81cdc0c51d8220320b3b618780e44ef96a39f76f7dbfef023 AS ui-builder
+# --- UI Build Stage: Build the Next.js frontend ---
+FROM node:25-alpine3.23 AS ui-builder
 WORKDIR /app
 
 # Copy UI package files and install dependencies
@@ -17,9 +17,9 @@ COPY ui/ ./
 RUN npx next build
 RUN node scripts/fix-paths.js
 
-# --- Go Build Stage: Compile the Go binary ---
-FROM golang:1.26.1-alpine3.23@sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039 AS builder
-WORKDIR /app
+# --- Go Build Stage: Compile the Go binary using local modules ---
+FROM golang:1.26.1-alpine3.23 AS builder
+WORKDIR /build
 
 # Install dependencies including gcc for CGO and sqlite
 RUN apk add --no-cache gcc musl-dev sqlite-dev binutils binutils-gold
@@ -27,31 +27,48 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev binutils binutils-gold
 # Set environment for CGO-enabled build (required for go-sqlite3)
 ENV CGO_ENABLED=1 GOOS=linux
 
-COPY transports/go.mod transports/go.sum ./
-RUN ls
-RUN cat go.mod
-RUN go mod download
+# Copy all local modules
+COPY core/ ./core/
+COPY framework/ ./framework/
+COPY plugins/ ./plugins/
+COPY transports/ ./transports/
 
-# Copy source code and dependencies
-COPY transports/ ./
+# Set up go workspace to resolve local module dependencies
+RUN go work init && \
+  go work use ./core && \
+  go work use ./framework && \
+  go work use ./plugins/governance && \
+  go work use ./plugins/jsonparser && \
+  go work use ./plugins/litellmcompat && \
+  go work use ./plugins/logging && \
+  go work use ./plugins/maxim && \
+  go work use ./plugins/mocker && \
+  go work use ./plugins/otel && \
+  go work use ./plugins/semanticcache && \
+  go work use ./plugins/telemetry && \
+  go work use ./transports
 
-COPY --from=ui-builder /app/out ./bifrost-http/ui
+# Download external (non-local) dependencies
+RUN cd /build/transports && go mod download
+
+# Copy UI build output into transports
+COPY --from=ui-builder /app/out ./transports/bifrost-http/ui
 
 # Build the binary with CGO enabled and static SQLite linking
-ENV GOWORK=off
 ARG VERSION=unknown
-RUN go build \
-  -ldflags="-w -s -X main.Version=v${VERSION} -extldflags '-static'" \
-  -a -trimpath \
-  -tags "sqlite_static" \
-  -o /app/main \
-  ./bifrost-http
+RUN cd /build/transports && \
+  go build \
+    -ldflags="-w -s -X main.Version=v${VERSION} -extldflags '-static'" \
+    -a -trimpath \
+    -tags "sqlite_static" \
+    -o /app/main \
+    ./bifrost-http
 
 # Verify build succeeded
 RUN test -f /app/main || (echo "Build failed" && exit 1)
 
 # --- Runtime Stage: Minimal runtime image ---
-FROM alpine:3.23.3@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
+FROM alpine:3.23.3
 WORKDIR /app
 
 # Install runtime dependencies for CGO-enabled binary
@@ -59,7 +76,7 @@ RUN apk add --no-cache musl libgcc ca-certificates wget
 
 # Create data directory and set up user
 COPY --from=builder /app/main .
-COPY --from=builder /app/docker-entrypoint.sh .
+COPY --from=builder /build/transports/docker-entrypoint.sh .
 
 # Getting arguments
 ARG ARG_APP_PORT=8080
