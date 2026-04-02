@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-04-03",
+  "git_hash": "7533dbfa",
+  "orchestrator": {
+    "name": "cortex-bifrost-assistant",
+    "purpose": "Full-stack with infra — covers backend Go, frontend React/Next.js, Terraform/Helm/Docker infrastructure",
+    "agent": "cortex/agents/cortex-bifrost-assistant/agent.md"
+  },
+  "domains": {
+    "backend": {
+      "agent": "cortex/agents/cortex-backend/agent.md",
+      "keywords": ["Go", "provider", "plugin", "handler", "middleware", "MCP", "fasthttp", "zerolog", "queue", "worker", "core", "sync.Pool", "atomic.Pointer", "mcp-go"],
+      "paths": ["core/", "transports/bifrost-http/", "plugins/", "core/schemas/", "core/providers/", "core/mcp/"],
+      "stack": ["Go 1.26.1", "fasthttp", "zerolog", "GORM", "sonic", "mcp-go"]
+    },
+    "frontend": {
+      "agent": "cortex/agents/cortex-frontend/agent.md",
+      "keywords": ["React", "Next.js", "UI", "component", "Tailwind", "RTK", "Zustand", "TypeScript", "App Router", "Radix", "data-testid"],
+      "paths": ["ui/app/", "ui/components/", "ui/lib/", "ui/hooks/"],
+      "stack": ["Next.js 15.5.12", "React 19", "Radix UI", "Tailwind CSS v4", "Redux Toolkit", "Zustand"]
+    },
+    "data": {
+      "agent": "cortex/agents/cortex-data/agent.md",
+      "keywords": ["GORM", "SQLite", "PostgreSQL", "schema", "migration", "configstore", "logstore", "vectorstore", "kvstore", "Weaviate", "Qdrant", "Pinecone", "Redis"],
+      "paths": ["framework/configstore/", "framework/logstore/", "framework/vectorstore/", "framework/kvstore/", "framework/modelcatalog/", "framework/encrypt/"],
+      "stack": ["GORM", "SQLite", "PostgreSQL", "Weaviate", "Qdrant", "Pinecone", "Redis"]
+    },
+    "testing": {
+      "agent": "cortex/agents/cortex-testing/agent.md",
+      "keywords": ["test", "testify", "gotestsum", "Playwright", "Newman", "E2E", "integration test", "vitest", "data-testid", "coverage", "llmtests", "mcptests"],
+      "paths": ["tests/", "core/internal/llmtests/", "core/internal/mcptests/"],
+      "stack": ["testify", "gotestsum", "Playwright", "Newman", "vitest"]
+    },
+    "infra": {
+      "agent": "cortex/agents/cortex-infra/agent.md",
+      "keywords": ["Terraform", "Helm", "Docker", "GitHub Actions", "CI", "workflow", "Nix", "AWS", "Azure", "GCP", "ECS", "AKS", "GKE", "Kubernetes", "deploy"],
+      "paths": [".github/workflows/", "terraform/", "helm-charts/"],
+      "stack": ["Terraform", "Helm", "Docker", "GitHub Actions", "Nix"]
+    },
+    "docs": {
+      "agent": "cortex/agents/cortex-docs/agent.md",
+      "keywords": ["docs", "documentation", "MDX", "Mintlify", "README", "guide", "migration", "changelog", "API reference"],
+      "paths": ["docs/"],
+      "stack": ["Mintlify", "MDX"]
+    }
+  },
+  "reused_domains": {},
+  "skipped_domains": {}
+}

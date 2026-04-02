@@ -56,6 +56,12 @@ settings.local.json
 .cursor/
 .claude/*
 !.claude/skills/
+!.claude/agents/
+!.claude/rules/
+.claude/verrueckt-setup.json
+
+# Worktrees
+.worktrees/
 
 # Python specific
 **/__pycache__/**
@@ -119,3 +125,7 @@ terraform.tfstate.backup
 
 # Bifrost benchmarking
 bifrost-benchmarking
+
+.omc/
+.remember-everthing/
+.mcp.json
