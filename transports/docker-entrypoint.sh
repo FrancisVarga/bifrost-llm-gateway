@@ -67,6 +67,12 @@ parse_args() {
     done
 }
 
+# Write config.json from environment variable if provided (used by Temps deployment)
+if [ -n "$BIFROST_CONFIG_JSON" ] && [ ! -f "$APP_DIR/config.json" ]; then
+    echo "$BIFROST_CONFIG_JSON" > "$APP_DIR/config.json"
+    echo "Wrote config.json from BIFROST_CONFIG_JSON environment variable"
+fi
+
 # Parse arguments if any are provided
 if [ $# -gt 1 ]; then
     parse_args "$@"
