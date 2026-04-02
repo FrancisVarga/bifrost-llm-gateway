@@ -1,0 +1,22 @@
+# Temps deployment configuration for Bifrost LLM Gateway
+# Docs: https://temps.sh/docs/docker-containers#custom-dockerfile-path
+
+build:
+  # Custom Dockerfile path — not at repo root, lives in transports/
+  dockerfile: transports/Dockerfile
+  # Build context must be repo root because the Dockerfile copies from
+  # both ui/ (frontend) and transports/ (backend)
+  context: "."
+  args:
+    VERSION: latest
+    ARG_APP_PORT: "8080"
+    ARG_APP_HOST: "0.0.0.0"
+    ARG_LOG_LEVEL: info
+    ARG_LOG_STYLE: json
+    ARG_APP_DIR: /app/data
+
+health:
+  path: /health
+  timeout: 10
+  interval: 30
+  retries: 3
